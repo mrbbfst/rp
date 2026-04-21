@@ -6,5 +6,3 @@ torchvision==0.19.1
 torchaudio==2.4.1
 faster-whisper==0.10.1
 pyannote.audio==3.1.1
-# whisperx versioning is sometimes tricky, 3.1.1 is a stable point for large-v3 usage
-whisperx==3.1.1

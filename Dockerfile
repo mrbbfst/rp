@@ -24,9 +24,8 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install python dependencies
-# Note: whisperx might need to be installed from git if pip version is old, 
-# but usually 'pip install whisperx' works.
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install git+https://github.com/m-bain/whisperX.git
 
 # Copy source code
 COPY . .
