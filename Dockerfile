@@ -5,10 +5,16 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update --fix-missing && apt-get install -y \
     ffmpeg \
     wget \
     git \
+    build-essential \
+    libsndfile1 \
+    libssl-dev \
+    libffi-dev \
+    python3-dev \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
