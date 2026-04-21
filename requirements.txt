@@ -1,0 +1,7 @@
+runpod==1.6.2
+requests==2.31.0
+torch==2.2.1
+torchvision==0.17.1
+torchaudio==2.2.1
+# whisperx versioning is sometimes tricky, 3.1.1 is a stable point for large-v3 usage
+whisperx==3.1.1
