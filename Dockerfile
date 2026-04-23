@@ -7,6 +7,14 @@ ENV PYTHONUNBUFFERED=1
 # Install system dependencies
 RUN apt-get update --fix-missing && apt-get install -y \
     ffmpeg \
+    pkg-config \
+    libavformat-dev \
+    libavcodec-dev \
+    libavdevice-dev \
+    libavutil-dev \
+    libswscale-dev \
+    libswresample-dev \
+    libavfilter-dev \
     wget \
     git \
     build-essential \
