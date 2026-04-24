@@ -12,12 +12,24 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 COMPUTE_TYPE = "float16" if DEVICE == "cuda" else "int8"
 DEFAULT_MODEL_SIZE = os.getenv("WHISPER_MODEL", "large-v3")
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "16"))
+CACHE_DIR = os.getenv("WHISPER_CACHE_DIR")
+
+if CACHE_DIR:
+    print(f"[*] Using persistent cache directory: {CACHE_DIR}")
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    # Redirect Hugging Face and Torch models to the cache directory
+    os.environ["HF_HOME"] = CACHE_DIR
+    os.environ["TORCH_HOME"] = os.path.join(CACHE_DIR, "torch")
 
 # Global model cache to avoid reloading for every job
 print(f"[*] Initializing WhisperX with default model={DEFAULT_MODEL_SIZE}, device={DEVICE}, compute_type={COMPUTE_TYPE}")
-# Use a dictionary to potentially support multiple models, though memory is a limit
 models = {
-    DEFAULT_MODEL_SIZE: whisperx.load_model(DEFAULT_MODEL_SIZE, DEVICE, compute_type=COMPUTE_TYPE)
+    DEFAULT_MODEL_SIZE: whisperx.load_model(
+        DEFAULT_MODEL_SIZE, 
+        DEVICE, 
+        compute_type=COMPUTE_TYPE, 
+        download_root=CACHE_DIR
+    )
 }
 
 def handler(job):
@@ -51,7 +63,12 @@ def handler(job):
     if requested_model not in models:
         print(f"[*] Loading requested model: {requested_model}")
         try:
-            models[requested_model] = whisperx.load_model(requested_model, DEVICE, compute_type=COMPUTE_TYPE)
+            models[requested_model] = whisperx.load_model(
+                requested_model, 
+                DEVICE, 
+                compute_type=COMPUTE_TYPE, 
+                download_root=CACHE_DIR
+            )
         except Exception as e:
             return {"error": f"Failed to load model '{requested_model}': {str(e)}"}
     
@@ -86,7 +103,11 @@ def handler(job):
         # 3. Align (get precise word-level timestamps)
         detected_language = result.get("language", language)
         print(f"[*] Aligning (Language: {detected_language})...")
-        model_a, metadata = whisperx.load_align_model(language_code=detected_language, device=DEVICE)
+        model_a, metadata = whisperx.load_align_model(
+            language_code=detected_language, 
+            device=DEVICE,
+            download_root=CACHE_DIR
+        )
         result = whisperx.align(result["segments"], model_a, metadata, audio, DEVICE, return_char_alignments=False)
         
         # Free up align model memory after use
@@ -97,6 +118,7 @@ def handler(job):
 
         # 4. Diarization
         print("[*] Performing Speaker Diarization...")
+        # Note: DiarizationPipeline uses HF_HOME env var which we set above
         diarize_model = DiarizationPipeline(use_auth_token=hf_token, device=DEVICE)
         
         diarize_args = {}
